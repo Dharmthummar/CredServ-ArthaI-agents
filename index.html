@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CredServ ArthaI Agents — Live Demo Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --green:#009945;--green-dark:#044522;--green-light:#7ca82b;
+  --navy:#0a1628;--navy2:#112240;--blue:#26a0da;--steel:#314755;
+  --bg:#f4f7f9;--surface:#fff;--border:#e2e8f0;
+  --text:#0a1628;--muted:#64748b;--success:#009945;--warn:#f59e0b;--err:#ef4444;
+  --radius:12px;--shadow:0 2px 16px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;background:var(--navy);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100}
+.sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-diamond{width:36px;height:36px;background:linear-gradient(135deg,var(--green),var(--green-light));transform:rotate(45deg);border-radius:6px}
+.logo-text{color:#fff;font-size:18px;font-weight:800;letter-spacing:-.5px}
+.logo-sub{color:rgba(255,255,255,.4);font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{padding:20px 12px;flex:1}
+.nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px;padding:0 12px;margin:16px 0 8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.6);font-size:13.5px;font-weight:500;transition:all .2s;margin-bottom:2px}
+.nav-item:hover,.nav-item.active{background:rgba(0,153,69,.15);color:#fff}
+.nav-item.active{color:var(--green);border-left:3px solid var(--green);padding-left:9px}
+.nav-icon{width:18px;text-align:center;font-size:16px}
+.badge{margin-left:auto;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.sidebar-footer{padding:16px 24px;border-top:1px solid rgba(255,255,255,.08)}
+.status-dot{width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-text{font-size:12px;color:rgba(255,255,255,.5);margin-left:8px}
+
+/* ── MAIN ── */
+.main{margin-left:260px;flex:1;display:flex;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.badge-pill{background:linear-gradient(135deg,var(--green),var(--green-light));color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px}
+.content{padding:32px;flex:1}
+
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:32px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);padding:24px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card.green::before{background:linear-gradient(90deg,var(--green),var(--green-light))}
+.kpi-card.blue::before{background:linear-gradient(90deg,var(--steel),var(--blue))}
+.kpi-card.warn::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.kpi-card.navy::before{background:linear-gradient(90deg,var(--navy),var(--steel))}
+.kpi-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.kpi-value{font-size:32px;font-weight:800;color:var(--text);margin:8px 0 4px}
+.kpi-delta{font-size:12px;color:var(--green);font-weight:600}
+.kpi-icon{position:absolute;top:20px;right:20px;font-size:28px;opacity:.15}
+
+/* ── SECTIONS ── */
+.section-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:15px;font-weight:700;color:var(--text)}
+.card-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.card-body{padding:24px}
+.card-full{grid-column:1/-1}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--green),var(--green-light));color:#fff;box-shadow:0 4px 12px rgba(0,153,69,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,153,69,.4)}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--green);color:var(--green)}
+.btn-sm{padding:7px 14px;font-size:12px}
+
+/* ── JSON OUTPUT ── */
+.output-box{background:#0d1117;border-radius:8px;padding:16px;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;overflow-x:auto;max-height:280px;overflow-y:auto}
+.json-key{color:#7ee787}
+.json-str{color:#a5d6ff}
+.json-num{color:#f2cc60}
+.json-null{color:#ff7b72}
+.json-bool{color:#ff7b72}
+
+/* ── STATE MACHINE ── */
+.state-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:16px 0}
+.state-node{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;border:2px solid transparent;transition:all .3s;cursor:default;white-space:nowrap}
+.state-node.inactive{background:var(--bg);color:var(--muted);border-color:var(--border)}
+.state-node.active{background:linear-gradient(135deg,var(--green),var(--green-light));color:#fff;box-shadow:0 4px 12px rgba(0,153,69,.3)}
+.state-node.terminal-ok{background:var(--green-dark);color:#fff}
+.state-node.terminal-dispute{background:#7c3aed;color:#fff}
+.state-node.terminal-human{background:var(--steel);color:#fff}
+.state-arrow{color:var(--muted);font-size:16px}
+.log-feed{background:#0d1117;border-radius:8px;padding:12px 16px;font-size:12px;font-family:'Courier New',monospace;max-height:220px;overflow-y:auto}
+.log-line{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);color:#8b949e}
+.log-line.info{color:#7ee787}
+.log-line.warn{color:#f2cc60}
+.log-line.error{color:#ff7b72}
+.log-line.state{color:#a5d6ff;font-weight:600}
+
+/* ── VERIFICATION ── */
+.verify-step{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:8px;margin-bottom:8px;transition:all .4s}
+.verify-step.pending{background:var(--bg)}
+.verify-step.fail{background:#fef2f2;border:1px solid #fecaca}
+.verify-step.pass{background:#f0fdf4;border:1px solid #bbf7d0}
+.verify-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.verify-icon.fail{background:#fecaca;color:#ef4444}
+.verify-icon.pass{background:#bbf7d0;color:#009945}
+.verify-icon.pending{background:var(--border);color:var(--muted)}
+.verify-text{font-size:13px;font-weight:500}
+.verify-detail{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Courier New',monospace}
+
+/* ── ARCH TABLE ── */
+.arch-table{width:100%;border-collapse:collapse;font-size:13px}
+.arch-table th{text-align:left;padding:10px 14px;background:var(--bg);font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.arch-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.arch-table tr:last-child td{border-bottom:none}
+.arch-table td:first-child{font-weight:600;color:var(--text);width:35%}
+.compliance-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{background:var(--border);border-radius:20px;height:6px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-light));border-radius:20px;transition:width 1s ease}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--bg);padding:4px;border-radius:10px}
+.tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .2s;border:none;background:transparent}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.sidebar{display:none}.main{margin-left:0}.section-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-diamond"></div>
+      <div>
+        <div class="logo-text">ArthaI Agents</div>
+        <div class="logo-sub">CredServ · GACPL</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="showTab('overview',this)"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-section">Phase 1 · KYC</div>
+    <div class="nav-item" onclick="showTab('kyc',this)"><span class="nav-icon">🔍</span> KYC Extractor<span class="badge">Demo</span></div>
+    <div class="nav-item" onclick="showTab('verify',this)"><span class="nav-icon">✅</span> Verification Engine</div>
+    <div class="nav-section">Phase 2 · Collections</div>
+    <div class="nav-item" onclick="showTab('state',this)"><span class="nav-icon">🔄</span> State Machine<span class="badge">Live</span></div>
+    <div class="nav-item" onclick="showTab('voice',this)"><span class="nav-icon">📞</span> D+3 Voice Agent</div>
+    <div class="nav-section">Phase 3 · Architecture</div>
+    <div class="nav-item" onclick="showTab('arch',this)"><span class="nav-icon">🏗️</span> Architecture</div>
+    <div class="nav-item" onclick="showTab('compliance',this)"><span class="nav-icon">⚖️</span> RBI Compliance</div>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>
+    <span class="status-text">28/28 Tests Passing</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">CredServ ArthaI Agents — MVP Demo</div>
+      <div class="topbar-sub">AI-powered KYC Onboarding + Collections Orchestrator · GACPL Fintech</div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge-pill">🟢 Free &amp; Open Source</span>
+      <a href="https://github.com/Dharmthummar/CredServ-ArthaI-agents" target="_blank" class="btn btn-secondary btn-sm">⭐ GitHub</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview" class="tab-panel active">
+      <div class="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-icon">📄</div>
+          <div class="kpi-label">Documents Extracted</div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-delta">↑ clean · degraded · bilingual</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-label">Tests Passing</div>
+          <div class="kpi-value">28</div>
+          <div class="kpi-delta">↑ 100% deterministic, no LLM calls</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+        <div class="kpi-card warn">
+          <div class="kpi-icon">🔄</div>
+          <div class="kpi-label">State Machine Nodes</div>
+          <div class="kpi-value">9</div>
+          <div class="kpi-delta">D-15 → D+3 full lifecycle</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:90%"></div></div>
+        </div>
+        <div class="kpi-card navy">
+          <div class="kpi-icon">⚖️</div>
+          <div class="kpi-label">Compliance Rules</div>
+          <div class="kpi-value">5</div>
+          <div class="kpi-delta">RBI · DPDP · TRAI · ISO 27001</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <div class="section-grid">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Phase 1 — KYC Extractor</div><div class="card-subtitle">VLM + Deterministic Verifier</div></div>
+            <button class="btn btn-primary btn-sm" onclick="showTab('kyc',null)">Try Demo →</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Uses a local Vision-Language Model (Ollama <code>llama3.2-vision</code>) to extract structured JSON from Indian bank statements — clean, skewed, and bilingual. No regex. No brittle OCR.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--green);font-size:16px">✦</span> Universal JSON schema prompt</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--green);font-size:16px">✦</span> Deterministic balance verification (Decimal-safe)</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--green);font-size:16px">✦</span> Auto-retry with failure reason injection</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--green);font-size:16px">✦</span> Dual backend: Ollama (local) or Gemini (free tier)</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Phase 2 — Collections Orchestrator</div><div class="card-subtitle">LangGraph State Machine</div></div>
+            <button class="btn btn-primary btn-sm" onclick="showTab('state',null)">Run Demo →</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Deterministic LangGraph graph managing a borrower's lifecycle from D-15 to D+3. SMS, email, push, and AI voice call orchestrated with strict bounded autonomy — bounded by 8 negative constraints.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--blue);font-size:16px">✦</span> 6 deterministic states, conditional routing</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--blue);font-size:16px">✦</span> D+3 AI voice agent (ARIA) with strict guardrails</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--blue);font-size:16px">✦</span> Instant human hand-off on dispute</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="color:var(--blue);font-size:16px">✦</span> Full audit log — run_id, contacts, transitions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KYC TAB -->
+    <div id="tab-kyc" class="tab-panel">
+      <div class="section-grid">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">KYC Extraction Demo</div><div class="card-subtitle">Simulated LLM output → structured JSON</div></div>
+            <button class="btn btn-primary btn-sm" id="extractBtn" onclick="runExtraction()">▶ Run Extraction</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Document type: <strong>Bilingual (English + Hindi)</strong> — HDFC Bank statement</p>
+            <div class="output-box" id="kycOutput"><span style="color:#8b949e">// Click "Run Extraction" to see the VLM output...</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Parsed Statement</div><div class="card-subtitle">Verified by deterministic engine</div></div>
+            <span id="verifyBadge" style="font-size:12px;color:var(--muted)">Awaiting extraction…</span>
+          </div>
+          <div class="card-body">
+            <div id="parsedTable"><p style="font-size:13px;color:var(--muted);text-align:center;padding:40px 0">Run extraction to see parsed data</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERIFY TAB -->
+    <div id="tab-verify" class="tab-panel">
+      <div class="card card-full">
+        <div class="card-header">
+          <div><div class="card-title">Verification Engine — Math Error Detection</div><div class="card-subtitle">Deterministic guardrail: catches balance mismatches and triggers auto-retry</div></div>
+          <button class="btn btn-primary btn-sm" onclick="runVerifier()">▶ Run Verifier Demo</button>
+        </div>
+        <div class="card-body">
+          <div id="verifySteps">
+            <p style="font-size:13px;color:var(--muted);text-align:center;padding:40px 0">Click "Run Verifier Demo" to see live error detection + auto-retry</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE MACHINE TAB -->
+    <div id="tab-state" class="tab-panel">
+      <div class="card card-full" style="margin-bottom:24px">
+        <div class="card-header">
+          <div><div class="card-title">Collections State Machine</div><div class="card-subtitle">D-15 → D+3 lifecycle — choose a simulation path</div></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="runStateMachine('paid')">▶ Paid Path</button>
+            <button class="btn btn-primary btn-sm" onclick="runStateMachine('dispute')">▶ Dispute Path</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="state-flow" id="stateFlow">
+            <div class="state-node inactive" id="sn-d15">PENDING_D15</div>
+            <div class="state-arrow">→</div>
+            <div class="state-node inactive" id="sn-d7">REMINDER_D7</div>
+            <div class="state-arrow">→</div>
+            <div class="state-node inactive" id="sn-d1f">FINAL_REMINDER_D1</div>
+            <div class="state-arrow">→</div>
+            <div class="state-node inactive" id="sn-d0">DUE_DATE_CHECK</div>
+            <div class="state-arrow">→</div>
+            <div class="state-node inactive" id="sn-d1o">DELINQUENT_D1</div>
+            <div class="state-arrow">→</div>
+            <div class="state-node inactive" id="sn-d3">DELINQUENT_D3</div>
+            <div class="state-arrow">→</div>
+            <div class="state-node inactive" id="sn-terminal">Terminal…</div>
+          </div>
+          <div class="log-feed" id="stateLogs" style="margin-top:16px">
+            <div class="log-line">// Select a simulation path above to start the demo…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VOICE AGENT TAB -->
+    <div id="tab-voice" class="tab-panel">
+      <div class="card card-full">
+        <div class="card-header">
+          <div><div class="card-title">D+3 Voice Agent — ARIA System Prompt</div><div class="card-subtitle">Strict negative constraints + bounded autonomy rules</div></div>
+          <span style="font-size:12px;padding:4px 12px;background:#fef9c3;color:#92400e;border-radius:20px;font-weight:600">⚠️ Compliance-Locked</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div>
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">🚫 8 Strict Negative Constraints</div>
+              <div style="display:flex;flex-direction:column;gap:8px" id="constraints"></div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">🔀 Mandatory Hand-Off Triggers</div>
+              <div style="display:flex;flex-direction:column;gap:8px" id="handoffs"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE TAB -->
+    <div id="tab-arch" class="tab-panel">
+      <div class="section-grid">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Proof Log Pipeline</div><div class="card-subtitle">Immutable audit trail — RBI IT Framework §4.3</div></div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px" id="archPipeline"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Security Controls</div><div class="card-subtitle">Prompt Injection &amp; Data Leakage Prevention</div></div></div>
+          <div class="card-body">
+            <div id="secControls"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLIANCE TAB -->
+    <div id="tab-compliance" class="tab-panel">
+      <div class="card card-full">
+        <div class="card-header"><div><div class="card-title">Regulatory Compliance Mapping</div><div class="card-subtitle">RBI · DPDP Act 2023 · TRAI · ISO 27001</div></div></div>
+        <div class="card-body">
+          <table class="arch-table">
+            <thead><tr><th>Regulation</th><th>Requirement</th><th>Mechanism</th><th>Status</th></tr></thead>
+            <tbody id="complianceTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// ── Tab routing ──────────────────────────────────────────────────
+function showTab(id, navEl){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  else{
+    document.querySelectorAll('.nav-item').forEach(n=>{
+      if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+    });
+  }
+  if(id==='voice') renderVoice();
+  if(id==='arch') renderArch();
+  if(id==='compliance') renderCompliance();
+}
+
+// ── KYC Extraction Demo ─────────────────────────────────────────
+const SAMPLE_JSON = {
+  account_holder_name:"Priya Sharma",bank_name:"HDFC Bank",account_number:"50100123456789",
+  transactions:[
+    {date:"01-06-2024",description:"Opening Balance",debit:null,credit:null,balance:"25000.00"},
+    {date:"03-06-2024",description:"NEFT — Rajesh Kumar",debit:null,credit:"15000.00",balance:"40000.00"},
+    {date:"05-06-2024",description:"Amazon Purchase",debit:"2499.00",credit:null,balance:"37501.00"},
+    {date:"10-06-2024",description:"Monthly Salary",debit:null,credit:"75000.00",balance:"112501.00"},
+    {date:"15-06-2024",description:"Rent — समय परिसर",debit:"18000.00",credit:null,balance:"94501.00"},
+  ]
+};
+
+function syntaxHighlight(json){
+  return JSON.stringify(json,null,2)
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
+      let cls='json-num';
+      if(/^"/.test(m)){if(/:$/.test(m))cls='json-key';else cls='json-str';}
+      else if(/true|false/.test(m))cls='json-bool';
+      else if(/null/.test(m))cls='json-null';
+      return `<span class="${cls}">${m}</span>`;
+    });
+}
+
+function runExtraction(){
+  const btn=document.getElementById('extractBtn');
+  btn.textContent='⏳ Extracting…';btn.disabled=true;
+  const out=document.getElementById('kycOutput');
+  out.innerHTML='<span style="color:#f2cc60">// Calling Ollama llama3.2-vision...\n// Rasterising PDF pages to base-64 PNG...\n// Sending images with universal JSON prompt...\n</span>';
+  setTimeout(()=>{
+    out.innerHTML='<span style="color:#f2cc60">// Model response received. Parsing JSON...\n\n</span>'+syntaxHighlight(SAMPLE_JSON);
+    setTimeout(()=>renderParsed(),600);
+    btn.textContent='▶ Run Extraction';btn.disabled=false;
+  },2000);
+}
+
+function renderParsed(){
+  const s=SAMPLE_JSON;
+  const t=s.transactions;
+  let rows=t.map(r=>`<tr>
+    <td style="font-size:12px">${r.date}</td>
+    <td style="font-size:12px">${r.description}</td>
+    <td style="font-size:12px;color:#ef4444;text-align:right">${r.debit||'—'}</td>
+    <td style="font-size:12px;color:var(--green);text-align:right">${r.credit||'—'}</td>
+    <td style="font-size:12px;font-weight:600;text-align:right">${r.balance}</td>
+  </tr>`).join('');
+  document.getElementById('parsedTable').innerHTML=`
+    <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">
+      <strong>${s.account_holder_name}</strong> · ${s.bank_name} · A/C: ${s.account_number}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="text-align:left;padding:6px;color:var(--muted);font-size:11px">Date</th>
+        <th style="text-align:left;padding:6px;color:var(--muted);font-size:11px">Description</th>
+        <th style="text-align:right;padding:6px;color:var(--muted);font-size:11px">Debit</th>
+        <th style="text-align:right;padding:6px;color:var(--muted);font-size:11px">Credit</th>
+        <th style="text-align:right;padding:6px;color:var(--muted);font-size:11px">Balance</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  document.getElementById('verifyBadge').innerHTML='<span style="color:var(--green);font-weight:600">✓ Verification Passed</span>';
+}
+
+// ── Verifier Demo ───────────────────────────────────────────────
+const VERIFY_STEPS=[
+  {label:"Attempt 1 — Initial LLM Extraction",status:"fail",
+   detail:"Row 2 (03-06-2024): prev=25000.00, credit=15000.00 → expected=40000.00, reported=39000.00, diff=1000.00\nRow 3 (05-06-2024): prev=39000.00, debit=2499.00 → expected=36501.00, reported=37800.00, diff=1299.00",
+   msg:"3 balance mismatches detected — triggering auto-retry"},
+  {label:"Retry Prompt Injection",status:"warn",
+   detail:"Failure reason injected into RETRY_CORRECTION_PROMPT:\n'3 balance mismatch(es) detected: Row 2 diff=1000.00, Row 3 diff=1299.00…'",
+   msg:"Model receives failure context + original images for re-inspection"},
+  {label:"Attempt 2 — Corrected Extraction",status:"pass",
+   detail:"✓ All 5 rows pass.\n  Total debits=20499.00, credits=90000.00, closing balance=94501.00",
+   msg:"Verification PASSED — result committed to audit log"},
+];
+
+async function runVerifier(){
+  const el=document.getElementById('verifySteps');
+  el.innerHTML='';
+  for(let i=0;i<VERIFY_STEPS.length;i++){
+    const s=VERIFY_STEPS[i];
+    await new Promise(r=>setTimeout(r,900*(i+1)));
+    el.innerHTML+=`<div class="verify-step ${s.status}">
+      <div class="verify-icon ${s.status}">${s.status==='pass'?'✓':s.status==='fail'?'✗':'↻'}</div>
+      <div>
+        <div class="verify-text">${s.label}</div>
+        <div class="verify-detail">${s.detail}</div>
+        <div style="font-size:12px;margin-top:4px;color:${s.status==='pass'?'var(--green)':s.status==='fail'?'var(--err)':'var(--warn)'}">${s.msg}</div>
+      </div>
+    </div>`;
+  }
+}
+
+// ── State Machine ───────────────────────────────────────────────
+const STATES_PAID=[
+  {id:'d15',log:'[D-15] Borrower BRW-2024-00142 entered monitoring window. Due: 2024-06-30',cls:'info'},
+  {id:'d7',log:'[D-7] SMS sent: "Dear Arjun, EMI ₹18,500 due on 2024-06-30. Pay now: pay.lender.in"',cls:'info'},
+  {id:'d1f',log:'[D-1] Push notification: "🔔 EMI due TOMORROW — ₹18,500. Pay via app."',cls:'info'},
+  {id:'d0',log:'[D+0] Checking payment gateway for LN-2024-00891…',cls:'warn'},
+  {id:'terminal',log:'[D+0] ✅ Payment CONFIRMED. STATE → CLOSED_PAID',cls:'info',terminal:'terminal-ok',label:'CLOSED_PAID ✅'},
+];
+const STATES_DISPUTE=[
+  {id:'d15',log:'[D-15] Borrower entered monitoring window.',cls:'info'},
+  {id:'d7',log:'[D-7] SMS + Email sent. No payment response.',cls:'info'},
+  {id:'d1f',log:'[D-1] Final push notification sent.',cls:'info'},
+  {id:'d0',log:'[D+0] Payment check: UNPAID. Entering delinquency.',cls:'warn'},
+  {id:'d1o',log:'[D+1] Overdue SMS sent. Payment still not received.',cls:'warn'},
+  {id:'d3',log:'[D+3] Initiating AI Voice Call (ARIA)…',cls:'warn'},
+  {id:'terminal',log:'[D+3] DISPUTE DETECTED: "I never took this loan." → CLOSED_DISPUTED ⚠️\n       Human agent AGENT-B0AB80 assigned.',cls:'error',terminal:'terminal-dispute',label:'CLOSED_DISPUTED ⚠️'},
+];
+
+async function runStateMachine(path){
+  const steps=path==='paid'?STATES_PAID:STATES_DISPUTE;
+  ['d15','d7','d1f','d0','d1o','d3','terminal'].forEach(id=>{
+    const el=document.getElementById('sn-'+id);
+    if(el){el.className='state-node inactive';if(id==='terminal')el.textContent='Terminal…';}
+  });
+  const logs=document.getElementById('stateLogs');
+  logs.innerHTML='';
+  for(const step of steps){
+    await new Promise(r=>setTimeout(r,800));
+    const el=document.getElementById('sn-'+step.id);
+    if(el){
+      el.className='state-node active';
+      if(step.terminal){setTimeout(()=>{el.className='state-node '+step.terminal;el.textContent=step.label;},600);}
+    }
+    const line=document.createElement('div');
+    line.className='log-line '+step.cls;
+    line.innerHTML=step.log.replace(/\n/,'<br>');
+    logs.appendChild(line);
+    logs.scrollTop=logs.scrollHeight;
+  }
+}
+
+// ── Voice Agent ─────────────────────────────────────────────────
+function renderVoice(){
+  const constraints=[
+    "Never threaten arrest, legal action, or social embarrassment",
+    "Never use intimidating or condescending language",
+    "Never call outside 8:00 AM – 7:00 PM local time",
+    "Never share borrower's PII with any third party",
+    "Never claim to be human when sincerely asked",
+    "Never provide specific legal advice",
+    "Never promise fee waivers without human confirmation",
+    "Never continue if borrower says 'stop calling me'",
+  ];
+  const handoffs=[
+    "Borrower uses: 'dispute', 'fraud', 'not my loan'",
+    "Borrower requests a human or manager",
+    "Borrower shows emotional distress",
+    "Call exceeds 5 minutes without resolution",
+    "Any ambiguous or edge-case scenario",
+  ];
+  document.getElementById('constraints').innerHTML=constraints.map(c=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;background:#fef2f2;border-radius:6px;border-left:3px solid var(--err)">
+      <span style="color:var(--err);font-size:14px;flex-shrink:0">✗</span><span>${c}</span>
+    </div>`).join('');
+  document.getElementById('handoffs').innerHTML=handoffs.map(h=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px;background:#fffbeb;border-radius:6px;border-left:3px solid var(--warn)">
+      <span style="color:var(--warn);font-size:14px;flex-shrink:0">→</span><span>${h}</span>
+    </div>`).join('');
+}
+
+// ── Architecture ────────────────────────────────────────────────
+function renderArch(){
+  const pipeline=[
+    {icon:'🔗',label:'Application Layer',desc:'Emits structured proof event per LLM call'},
+    {icon:'📨',label:'Kafka Topic (audit.proof-log)',desc:'Append-only, 7-year retention, min.insync.replicas=3'},
+    {icon:'⚡',label:'ClickHouse Hot Store',desc:'90-day window, SQL queryable for regulator audits'},
+    {icon:'🧊',label:'AWS S3 Glacier (WORM)',desc:'AES-256 encrypted, Object Lock, HMAC-signed, immutable'},
+  ];
+  document.getElementById('archPipeline').innerHTML=pipeline.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--green),var(--green-light));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${p.icon}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600">${p.label}</div>
+        <div style="font-size:12px;color:var(--muted)">${p.desc}</div>
+      </div>
+      ${i<pipeline.length-1?'':''} 
+    </div>
+    ${i<pipeline.length-1?'<div style="margin-left:18px;color:var(--border);font-size:20px">│</div>':''}`).join('');
+
+  const controls=[
+    {t:'Image-only VLM Input',d:'PDF rasterised to pixels — hidden text injection impossible'},
+    {t:'Static System Prompt',d:'No user text in system prompt — stored in secrets manager'},
+    {t:'JSON Schema Enforcement',d:'json.loads() rejects non-JSON — never passed downstream'},
+    {t:'Local Ollama VLM',d:'Zero outbound traffic — PII never leaves the VPC'},
+    {t:'PII Tokenisation',d:'Vault transit engine before any field is logged or displayed'},
+    {t:'mTLS Inter-service',d:'Short-lived certs rotated every 24 hours'},
+  ];
+  document.getElementById('secControls').innerHTML=controls.map(c=>`
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px"><span style="color:var(--green)">🛡</span> ${c.t}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.d}</div>
+    </div>`).join('');
+}
+
+// ── Compliance ──────────────────────────────────────────────────
+function renderCompliance(){
+  const rows=[
+    ['RBI IT Framework §4.3','Full audit trail for every AI decision','Kafka→ClickHouse→S3 WORM proof log'],
+    ['DPDP Act 2023','Data minimisation & PII protection','Vault tokenisation; field-level access control'],
+    ['TRAI TCCCPR','No-call registry compliance','DNC check before every outbound contact'],
+    ['RBI Collections Guidelines 2022','Call-time windows; no harassment','State machine enforces 8AM–7PM; 8 negative constraints in D+3 prompt'],
+    ['ISO 27001','Information security management','mTLS, HSM key management, VAPT on every release'],
+    ['RBI Data Residency Circular','Data must not leave Indian infrastructure','Ollama runs on-premise — zero data egress during LLM inference'],
+  ];
+  document.getElementById('complianceTable').innerHTML=rows.map(r=>`<tr>
+    <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td>
+    <td><span class="compliance-badge">✓ Met</span></td>
+  </tr>`).join('');
+}
+</script>
+</body>
+</html>
