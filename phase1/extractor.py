@@ -244,8 +244,24 @@ def _call_gemini(images_b64: list[str], user_text: str) -> str:
         )
 
     genai.configure(api_key=api_key)
+
+    # Auto-detect available flash model
+    available_model = GEMINI_MODEL
+    try:
+        models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
+        flash_models = [m for m in models if "flash" in m.lower()]
+        if flash_models:
+            # pick the latest/first available one, removing 'models/' prefix if present
+            # reverse sort so 2.0 comes before 1.5
+            flash_models.sort(reverse=True)
+            m_name = flash_models[0]
+            available_model = m_name[7:] if m_name.startswith("models/") else m_name
+            log.info(f"Auto-detected Gemini model: {available_model}")
+    except Exception as e:
+        log.warning(f"Could not list models: {e}")
+
     model = genai.GenerativeModel(
-        model_name=GEMINI_MODEL,
+        model_name=available_model,
         system_instruction=EXTRACTION_SYSTEM_PROMPT,
     )
 
@@ -253,10 +269,10 @@ def _call_gemini(images_b64: list[str], user_text: str) -> str:
     parts = []
     for img_b64 in images_b64:
         parts.append(
-            genai.types.Part.from_data(
-                data=base64.b64decode(img_b64),
-                mime_type="image/png",
-            )
+            {
+                "mime_type": "image/png",
+                "data": base64.b64decode(img_b64)
+            }
         )
     parts.append(user_text)
 
