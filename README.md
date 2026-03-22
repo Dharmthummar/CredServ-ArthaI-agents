@@ -1,7 +1,5 @@
-# FinTech AI Assignment — KYC Extractor + Collections Orchestrator
+# FinTech AI Agents — KYC Extractor + Collections Orchestrator
 
-> **Zero paid services** — Ollama runs the VLM locally; Gemini free tier available for demos.  
-> **28 / 28 tests passing** — all deterministic, no LLM calls in tests.
 
 ---
 
